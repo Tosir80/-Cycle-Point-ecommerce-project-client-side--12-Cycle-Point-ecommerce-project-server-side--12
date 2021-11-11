@@ -25,7 +25,8 @@ async function run() {
     await client.connect();
     const database = client.db('CyclePoint');
     const servicesCollection = database.collection('products');
-
+     const orderCollection =database.collection('order')
+     const reviewCollection =database.collection('review')
     // get all---------------
 app.get('/services',async(req,res)=>{
     const result = await servicesCollection.find({}).toArray()
@@ -41,9 +42,39 @@ app.get('/order/:id',async(req,res)=>{
   res.send(result)
 })
 
-
+// post cart data 
+app.post('/order',async(req,res)=>{
+  const data = req.body;
+  const result = await orderCollection.insertOne(data)
+  res.send(result)
+})
  
+// my order
+app.get('/myorder/:email',async(req,res)=>{
+  const email =req.params.email 
+  const result =await orderCollection.find({email :email}).toArray()
+  res.send(result)
+})
 
+// detete data from myorder
+app.delete('/deleteOrder/:id',async(req,res)=>{
+  const query=req.params.id 
+  const result =await orderCollection.deleteOne({_id:ObjectId(query)})
+  res.send(result)
+})
+// post review 
+
+app.post('/addreview', async(req, res) => {
+  const result = await reviewCollection.insertOne(req.body);
+  res.send(result);
+}); 
+
+// get review all
+app.get('/review',async(req,res)=>{
+    const result = await reviewCollection.find({}).toArray();
+    res.send(result)
+})
+//  
 
   } finally {
   }
