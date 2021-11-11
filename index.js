@@ -25,56 +25,108 @@ async function run() {
     await client.connect();
     const database = client.db('CyclePoint');
     const servicesCollection = database.collection('products');
-     const orderCollection =database.collection('order')
-     const reviewCollection =database.collection('review')
+    const orderCollection = database.collection('order');
+    const reviewCollection = database.collection('review');
+    const userCollection = database.collection('users');
     // get all---------------
-app.get('/services',async(req,res)=>{
-    const result = await servicesCollection.find({}).toArray()
-    res.send(result)
+    app.get('/services', async (req, res) => {
+      const result = await servicesCollection.find({}).toArray();
+      res.send(result);
+    });
+    //  findone
+
+    app.get('/order/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: ObjectId(id) };
+      const result = await servicesCollection.findOne(query);
+      res.send(result);
+    });
+
+    // post cart data
+    app.post('/order', async (req, res) => {
+      const data = req.body;
+      const result = await orderCollection.insertOne(data);
+      res.send(result);
+    });
+
+    // my order
+    app.get('/myorder/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await orderCollection.find({ email: email }).toArray();
+      res.send(result);
+    });
+
+    // detete data from myorder
+    app.delete('/deleteOrder/:id', async (req, res) => {
+      const query = req.params.id;
+      const result = await orderCollection.deleteOne({ _id: ObjectId(query) });
+      res.send(result);
+    });
+    // post review
+
+    app.post('/addreview', async (req, res) => {
+      const result = await reviewCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    // get review all
+    app.get('/review', async (req, res) => {
+      const result = await reviewCollection.find({}).toArray();
+      res.send(result);
+    });
+    //  addproduct
+    app.post('/addproduct', async (req, res) => {
+      const result = await servicesCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    // deleteProduct
+    app.delete('/deleteProduct/:id', async (req, res) => {
+      const query = req.params.id;
+      const result = await servicesCollection.deleteOne({
+        _id: ObjectId(query),
+      });
+      res.send(result);
+    });
+
+// savedUser ----
+
+  app.post('/saveduser', async (req, res) => {
+    const result = await userCollection.insertOne(req.body);
+    res.send(result);
+  });
+// saveduser for google 
+app.put('/saveduser',async(req,res)=>{
+  const user=req.body 
+  const filter = {email:user.email}
+  const options ={upsert:true} 
+  const updateDoc ={$set : user}
+  const result =await userCollection.updateOne(filter,updateDoc,options)
+  res.json(result)
 })
-//  findone
 
-app.get('/order/:id',async(req,res)=>{
-  const id =req.params.id
-
-  const query = { _id: ObjectId(id) };
-  const result= await servicesCollection.findOne(query)
+// make admin 
+app.put('/makeAdmin',async(req,res)=>{
+  const user=req.body 
+  const filter = {email:user.email}
+  const updateDoc={$set : {role : 'admin'}}
+  const result = await userCollection.updateOne(filter,updateDoc)
   res.send(result)
 })
 
-// post cart data 
-app.post('/order',async(req,res)=>{
-  const data = req.body;
-  const result = await orderCollection.insertOne(data)
-  res.send(result)
-})
- 
-// my order
-app.get('/myorder/:email',async(req,res)=>{
+
+// 
+app.get('/makeadmin/:email',async(req,res)=>{
   const email =req.params.email 
-  const result =await orderCollection.find({email :email}).toArray()
-  res.send(result)
+  const query = {email :email }
+  const user =await userCollection.findOne(query)
+  let isAdmin =false ;
+  if(user?.role=='admin'){
+    isAdmin=true ;
+  }
+  res.json({admin : isAdmin})
 })
-
-// detete data from myorder
-app.delete('/deleteOrder/:id',async(req,res)=>{
-  const query=req.params.id 
-  const result =await orderCollection.deleteOne({_id:ObjectId(query)})
-  res.send(result)
-})
-// post review 
-
-app.post('/addreview', async(req, res) => {
-  const result = await reviewCollection.insertOne(req.body);
-  res.send(result);
-}); 
-
-// get review all
-app.get('/review',async(req,res)=>{
-    const result = await reviewCollection.find({}).toArray();
-    res.send(result)
-})
-//  
 
   } finally {
   }
