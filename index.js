@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
+ 
 async function run() {
   try {
     await client.connect();
@@ -90,45 +90,68 @@ async function run() {
       res.send(result);
     });
 
-// savedUser ----
+    // savedUser ----
 
-  app.post('/saveduser', async (req, res) => {
-    const result = await userCollection.insertOne(req.body);
-    res.send(result);
-  });
-// saveduser for google 
-app.put('/saveduser',async(req,res)=>{
-  const user=req.body 
-  const filter = {email:user.email}
-  const options ={upsert:true} 
-  const updateDoc ={$set : user}
-  const result =await userCollection.updateOne(filter,updateDoc,options)
-  res.json(result)
-})
+    app.post('/saveduser', async (req, res) => {
+      const result = await userCollection.insertOne(req.body);
+      res.send(result);
+    });
+    // saveduser for google
+    app.put('/saveduser', async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const options = { upsert: true };
+      const updateDoc = { $set: user };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.json(result);
+    });
 
-// make admin 
-app.put('/makeAdmin',async(req,res)=>{
-  const user=req.body 
-  const filter = {email:user.email}
-  const updateDoc={$set : {role : 'admin'}}
-  const result = await userCollection.updateOne(filter,updateDoc)
-  res.send(result)
-})
+    // make admin
+    app.put('/makeAdmin', async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const updateDoc = { $set: { role: 'admin' } };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
+    //filter data by admin --
+    app.get('/makeadmin/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
 
-// 
-app.get('/makeadmin/:email',async(req,res)=>{
-  const email =req.params.email 
-  const query = {email :email }
-  const user =await userCollection.findOne(query)
-  let isAdmin =false ;
-  if(user?.role=='admin'){
-    isAdmin=true ;
-  }
-  res.json({admin : isAdmin})
-})
+      let isAdmin = false;
+      if (user?.role == 'admin') {
+        isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
+    });
 
-  } finally {
+    // all order get
+    app.get('/allorder', async (req, res) => {
+      const result = await orderCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    // update status
+    app.put('/allorder/:id', async (req, res) => {
+      const id=req.params.id
+      const filter={_id :ObjectId(id)}
+      const updateDoc = { $set:{ status:'Shipped' } };
+      const result = await orderCollection.updateOne(filter,updateDoc)
+      res.send(result)
+    });
+// delete order by admin
+ app.delete('/deleteProduct/:id', async (req, res) => {
+   const query = req.params.id;
+   const result = await orderCollection.deleteOne({
+     _id: ObjectId(query),
+   });
+   res.send(result);
+ });
+    
+  } finally { 
   }
 }
 run().catch(console.dir);
